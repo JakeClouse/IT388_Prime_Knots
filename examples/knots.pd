@@ -1,0 +1,6 @@
+# One diagram per line: a name, then 4 arc labels per crossing (PD code,
+# Regina/KnotInfo convention). Lines starting with # are ignored.
+trefoil 1 5 2 4 3 1 4 6 5 3 6 2
+figure-eight 4 2 5 1 8 6 1 5 6 3 7 4 2 7 3 8
+trefoil-sum-trefoil 1 5 2 4 3 1 4 6 5 3 12 2 7 11 8 10 9 7 10 12 11 9 6 8
+unknot
