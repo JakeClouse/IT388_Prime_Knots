@@ -5,11 +5,23 @@
 
 #include <link/link.h>
 #include <triangulation/dim3.h>
-
+#include <snappea/snappeatriangulation.h>   // CHECK: include path
+#include <vector>
+#include <string>
+#include <unordered_map>
+#include <random>
 #include <exception>
+
+using namespace regina;
+using std::vector, std::string, using std::unordered_map;
 
 namespace prime_knots {
 namespace {
+int DEFAULT_PREFILTER_MOVES = 10;
+struct r3Move {
+    regina::Crossing* crossing;
+    int side;
+};
 
 enum class Answer { yes, no, unknown };
 
@@ -47,8 +59,127 @@ Report result(Report report, Status status, const std::string& reason) {
     return report;
 }
 
-} // namespace
+//Claude used with reasearch paper for pseudocode
+bool checkNoR1R2(const regina::Link& knot) {
+    for (int i = 0; i < knot.crossings().size(); i++){
+        if (knot.hasR1(knot.crossings()[i])){
+            return false;
+        }
+        if (knot.hasR2(knot.crossings()[i])){
+            return false;
+        }
+    }
+    return true;
+}
+//Claude used with reasearch paper for pseudocode
+bool randomR3Prefilter(const regina::Link& knot) {
+    regina::Link knotCopy(knot);
+    std::vector<r3Move> r3Moves;
 
+    for (int i = 0; i < DEFAULT_PREFILTER_MOVES; ++i) {
+        if (!checkNoR1R2(knotCopy)){
+            return false;
+        }
+        r3Moves.clear();
+        for (int j = 0; j < knotCopy.size(); j++){
+            if (knotCopy.hasR3(knotCopy.crossings()[j],1)){
+                r3Moves.push_back({knotCopy.crossings()[j],1});
+            }
+            if (knotCopy.hasR3(knotCopy.crossings()[j],0)){
+                r3Moves.push_back({knotCopy.crossings()[j],0});
+            }
+        }
+        if (!r3Moves.empty()) {
+            int randomIndex = rand() % r3Moves.size();
+            knotCopy.r3(r3Moves[randomIndex].crossing, r3Moves[randomIndex].side);
+        }else{
+            return true;
+        }
+    }
+    return checkNoR1R2(knotCopy);
+}
+//Claude used with reasearch paper for pseudocode
+bool reducingPassCheck(const Link& knot) {
+    return !knot.hasReducingPass();
+} 
+//Claude used with reasearch paper for pseudocode
+bool simplifyingFilter(const Link& knot, int extraCrossings, int numThreads) {
+    const  size_t n = knot.size();
+    Link knotCopy(knot);
+    knotCopy.simplify();
+    if (knotCopy.size() < n) {
+        return false;
+    }
+    Link knotCopy2(knot);
+    knotCopy2.simplifyExhaustive(extraCrossings, numThreads,nullptr);
+    return knotCopy2.size() >= n;
+} 
+//Claude used with reasearch paper for pseudocode
+Link r3Canonical(const Link& knot, int numThreads) {
+    Link knotCopy(knot);
+    string best = knotCopy.sig();
+//Claude used to help with lambda formatting, as i am unfamilliar with them.
+    knotCopy.rewrite(0, numThreads, 
+        nullptr,
+        [&best](const std::string& sig, const regina::Link&) {
+        if (sig < best) {
+            best = sig;
+        }
+            return false;
+        });
+    return Link(best);
+}
+//Claude used with reasearch paper for pseudocode
+vector<int> connectKnots(const vector<Link>& knots, int extraCrossings, int numThreads) {
+    unordered_map<string, size_t> owner;
+    vector<size_t> label(knots.size());
+    for(int i = 0; i < knots.size(); ++i) {
+        label[i] = i;
+        knots[i].rewrite(extraCrossings, numThreads, nullptr,
+            //Lambda function created with llm assistance
+            [&](const std::string& sig, const regina::Link&) {
+                auto r = owner.emplace(sig, i);      // claims sig if unclaimed
+                if (r.second) return false;          // new diagram, keep searching
+                label[i] = label[r.first->second];   // met an earlier search: join its class
+                return true;                         // stop, its class already explored this region
+            });
+    }
+    return label;
+}
+//Claude used with reasearch paper for pseudocode
+string snappyTri(const Link& knot, int tries){
+    SnapPeaTriangulation tri(knot);
+    for (int i = 0; i < tries; i++){
+        try {
+            if(attempt > 0) tri.randomise();
+            Solution sol = tri.solutionType();
+            if (s != Solution::Geometric && s != Solution::NonGeometric) continue;
+            if (!tri.canonise()) continue;
+            return tri.isoSig();
+
+        }catch (const std::exception&) {
+            tri = SnapPeaTriangulation(knot);              
+        }
+    }
+    return "";
+}
+
+string polynomial(const Link& knot, bool homefly){
+    Link mirror(knot);
+    mirror.reflect();
+    string a, b;
+    if (homefly){
+        a = knot.homfly().str();
+        b = mirror.homfly().str();
+    }else{
+        a = knot.jones().str();
+        b = mirror.jones().str();
+    }
+    return std::min(a,b);
+}
+
+
+}
 Report classify(const std::string& line) {
     Report report;
     try {
