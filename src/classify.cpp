@@ -13,7 +13,7 @@
 #include <exception>
 
 using namespace regina;
-using std::vector, std::string, using std::unordered_map;
+using std::vector, std::string, std::unordered_map;
 
 namespace prime_knots {
 namespace {
