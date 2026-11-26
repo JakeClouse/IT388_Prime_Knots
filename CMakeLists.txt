@@ -27,6 +27,11 @@ if(PK_WITH_REGINA)
     separate_arguments(REGINA_cflags UNIX_COMMAND "${REGINA_cflags}")
     separate_arguments(REGINA_libs UNIX_COMMAND "${REGINA_libs}")
 
+    # Stage one: candidate generation (plantri + Regina).
+    add_library(knot_generate src/generate.cpp)
+    target_link_libraries(knot_generate PUBLIC knot_core ${REGINA_libs})
+    target_compile_options(knot_generate PUBLIC ${REGINA_cflags})
+
     add_library(knot_classify src/classify.cpp)
     target_link_libraries(knot_classify PUBLIC knot_core ${REGINA_libs})
     target_compile_options(knot_classify PUBLIC ${REGINA_cflags})
@@ -49,5 +54,17 @@ if(BUILD_TESTING)
         add_test(NAME classify COMMAND test-classify)
         add_test(NAME example COMMAND prime-knots "${CMAKE_CURRENT_SOURCE_DIR}/examples/knots.pd")
         set_tests_properties(classify example PROPERTIES TIMEOUT 120)
+
+        # With plantri on the PATH, also checks flype_canonical against the
+        # known counts of prime alternating knots up to 10 crossings.
+        add_executable(test-generate tests/test_generate.cpp)
+        target_link_libraries(test-generate PRIVATE knot_generate)
+        find_program(PLANTRI_EXECUTABLE plantri)
+        if(PLANTRI_EXECUTABLE)
+            add_test(NAME generate COMMAND test-generate "${PLANTRI_EXECUTABLE}")
+        else()
+            add_test(NAME generate COMMAND test-generate)
+        endif()
+        set_tests_properties(generate PROPERTIES TIMEOUT 600)
     endif()
 endif()
