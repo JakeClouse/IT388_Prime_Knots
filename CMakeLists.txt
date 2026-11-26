@@ -21,6 +21,8 @@ if(PK_WITH_REGINA)
             message(FATAL_ERROR "regina-engine-config --${kind}: ${error}")
         endif()
     endforeach()
+    # Some builds print "Regina 7.4.1 (...)", so keep just the number.
+    string(REGEX MATCH "[0-9]+\\.[0-9]+(\\.[0-9]+)?" REGINA_version "${REGINA_version}")
     if(REGINA_version VERSION_LESS "7.4")
         message(FATAL_ERROR "Regina >= 7.4 is required; found ${REGINA_version}")
     endif()
@@ -32,7 +34,7 @@ if(PK_WITH_REGINA)
     target_link_libraries(knot_generate PUBLIC knot_core ${REGINA_libs})
     target_compile_options(knot_generate PUBLIC ${REGINA_cflags})
 
-    add_library(knot_classify src/classify.cpp)
+    add_library(knot_classify src/classify.cpp src/prove.cpp)
     target_link_libraries(knot_classify PUBLIC knot_core ${REGINA_libs})
     target_compile_options(knot_classify PUBLIC ${REGINA_cflags})
 

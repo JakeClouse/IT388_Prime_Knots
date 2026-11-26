@@ -132,7 +132,7 @@ Link r3Canonical(const Link& knot, int numThreads) {
 //Claude used with reasearch paper for pseudocode
 vector<int> connectKnots(const vector<Link>& knots, int extraCrossings, int numThreads) {
     unordered_map<string, size_t> owner;
-    vector<size_t> label(knots.size());
+    vector<int> label(knots.size());
     for(int i = 0; i < knots.size(); ++i) {
         label[i] = i;
         knots[i].rewrite(extraCrossings, numThreads, nullptr,
@@ -151,11 +151,11 @@ string snappyTri(const Link& knot, int tries){
     SnapPeaTriangulation tri(knot);
     for (int i = 0; i < tries; i++){
         try {
-            if(attempt > 0) tri.randomise();
-            Solution sol = tri.solutionType();
-            if (s != Solution::Geometric && s != Solution::NonGeometric) continue;
-            if (!tri.canonise()) continue;
-            return tri.isoSig();
+            if (i > 0) tri.randomise();
+            SnapPeaTriangulation::Solution s = tri.solutionType();
+            if (s != SnapPeaTriangulation::Solution::Geometric &&
+                s != SnapPeaTriangulation::Solution::Nongeometric) continue;
+            return tri.canonise().isoSig();
 
         }catch (const std::exception&) {
             tri = SnapPeaTriangulation(knot);              
