@@ -100,6 +100,8 @@ vector<vector<int>> refine(const vector<vector<int>>& groups,
 
 string cover_homology(const Link& knot, int index, int maxGenerators) {
     GroupPresentation group = knot.group();
+    GroupPresentation other = knot.complement().group();
+    if (other.countGenerators() < group.countGenerators()) group = other;
     if ((int)group.countGenerators() > maxGenerators) return "";
 
     vector<string> homologies;

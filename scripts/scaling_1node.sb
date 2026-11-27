@@ -1,0 +1,32 @@
+#!/bin/bash
+#SBATCH --job-name=knots-1node
+#SBATCH --partition=compute
+#SBATCH --account=YOUR_ACCOUNT
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=128
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=240G
+#SBATCH --time=04:00:00
+#SBATCH --output=knots-1node.%j.out
+
+# Strong scaling on one node, plus several problem sizes.
+source scripts/env.sh
+CSV=results/scaling_1node.csv
+mkdir -p results
+
+run() {
+    export OMP_NUM_THREADS=$3
+    srun --mpi=pmi2 -N 1 -n $2 -c $3 build/census $1 --csv $CSV
+}
+
+for n in 11 12 13; do
+    run $n 1 1
+    run $n 1 2
+    run $n 2 2
+    run $n 4 2
+    run $n 8 2
+    run $n 16 2
+    run $n 32 2
+    run $n 64 2
+done
+run 14 64 2

@@ -58,6 +58,7 @@ Report result(Report report, Status status, const std::string& reason) {
     report.reason = reason;
     return report;
 }
+}
 
 //Claude used with reasearch paper for pseudocode
 bool checkNoR1R2(const regina::Link& knot) {
@@ -178,8 +179,6 @@ string polynomial(const Link& knot, bool homefly){
     return std::min(a,b);
 }
 
-
-}
 Report classify(const std::string& line) {
     Report report;
     try {
