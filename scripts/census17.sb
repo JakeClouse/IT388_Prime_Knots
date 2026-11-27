@@ -1,7 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=knots-17
 #SBATCH --partition=compute
-#SBATCH --account=YOUR_ACCOUNT
 #SBATCH --nodes=8
 #SBATCH --ntasks-per-node=64
 #SBATCH --cpus-per-task=2

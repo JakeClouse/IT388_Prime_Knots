@@ -1,7 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=knots-nodes
 #SBATCH --partition=compute
-#SBATCH --account=YOUR_ACCOUNT
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=64
 #SBATCH --cpus-per-task=2
@@ -9,9 +8,8 @@
 #SBATCH --time=04:00:00
 #SBATCH --output=knots-nodes.%j.out
 
-# Submit once per node count:
-#   for n in 1 2 4 8; do sbatch --nodes=$n scripts/scaling_nodes.sb; done
+# Scaling across nodes. run_all.sh submits this with 1, 2, 4 and 8 nodes.
 source scripts/env.sh
 mkdir -p results
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
-srun --mpi=pmi2 build/census ${N:-14} --csv results/scaling_nodes.csv
+srun --mpi=pmi2 build/census 14 --csv results/scaling_nodes.csv
