@@ -21,4 +21,10 @@ std::string cover_homology(const regina::Link& knot, int index, int maxGenerator
 // mode is hyperbolic, satellite or prime
 bool regina_certify(const regina::Triangulation<3>& complement, const std::string& mode);
 
+// classify.cpp
+bool randomR3Prefilter(const regina::Link& knot);
+bool reducingPassCheck(const regina::Link& knot);
+std::string snappyTri(const regina::Link& knot, int tries);
+std::string polynomial(const regina::Link& knot, bool homefly);
+
 } // namespace prime_knots

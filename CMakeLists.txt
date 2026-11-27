@@ -44,6 +44,14 @@ if(PK_WITH_REGINA)
         find_package(OpenMP REQUIRED COMPONENTS CXX)
         target_link_libraries(prime-knots PRIVATE OpenMP::OpenMP_CXX)
     endif()
+
+    # Full census: MPI across nodes, OpenMP inside each rank.
+    find_package(MPI COMPONENTS CXX)
+    find_package(OpenMP COMPONENTS CXX)
+    if(MPI_FOUND AND OpenMP_FOUND)
+        add_executable(census src/census.cpp)
+        target_link_libraries(census PRIVATE knot_generate knot_classify MPI::MPI_CXX OpenMP::OpenMP_CXX)
+    endif()
 endif()
 
 if(BUILD_TESTING)
@@ -68,5 +76,12 @@ if(BUILD_TESTING)
             add_test(NAME generate COMMAND test-generate)
         endif()
         set_tests_properties(generate PROPERTIES TIMEOUT 600)
+
+        if(TARGET census AND PLANTRI_EXECUTABLE)
+            add_test(NAME census COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
+                ${MPIEXEC_PREFLAGS} $<TARGET_FILE:census> 10 --plantri ${PLANTRI_EXECUTABLE}
+                --csv ${CMAKE_CURRENT_BINARY_DIR}/test_timing.csv)
+            set_tests_properties(census PROPERTIES TIMEOUT 900)
+        endif()
     endif()
 endif()
